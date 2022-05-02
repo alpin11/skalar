@@ -28,7 +28,7 @@ fastify.get("/", {
     return output
 })
 
-fastify.listen({port: 8020}, (err, addr) => {
+fastify.listen({port: 8020, host: "0.0.0.0"}, (err, addr) => {
   if (err)
     console.log(err)
 })
