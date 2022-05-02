@@ -1,14 +1,13 @@
 {
-  "name": "skalar",
+  "name": "image-scaling-service",
   "version": "1.0.0",
-  "description": "https://assets.fipa.com/image-thumbnails/content/homepage/industry-focus/image-thumb__18645__nextFrontend/plastics_1.webp",
+  "description": "image scaling service",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "type": "module",
-  "author": "",
+  "author": "Jonas Mair",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.27.2",
