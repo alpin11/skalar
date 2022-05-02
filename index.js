@@ -15,7 +15,7 @@ fastify.get("/", {
       quality: {type: "string"},
     }
   }}, async (req, res) => {
-    const input = (await axios({ url: req.query.url, responseType: "arraybuffer" })).data
+    const input = (await axios({ url: encodeURI(req.query.url), responseType: "arraybuffer" })).data
 
     const quality = req.query.quality ? parseInt(req.query.quality) : 80
 
@@ -32,4 +32,6 @@ fastify.listen({port: 8020, host: "0.0.0.0"}, (err, addr) => {
   if (err)
     console.log(err)
 })
+
+console.log("starting")
 
