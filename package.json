@@ -4,6 +4,7 @@
   "description": "https://assets.fipa.com/image-thumbnails/content/homepage/industry-focus/image-thumb__18645__nextFrontend/plastics_1.webp",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
