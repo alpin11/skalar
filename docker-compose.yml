@@ -1,0 +1,10 @@
+version: "3.2"
+
+services:
+  image-scaling:
+    image: ghcr.io/alpin11/image-scaling:latest
+    ports:
+      - 80:8020
+    command: 'npm run start'
+    deploy:
+      replicas: 1
