@@ -15,6 +15,9 @@ fastify.get("/", {
       quality: {type: "string"},
     }
   }}, async (req, res) => {
+    if (!req.query.url) {
+      return "url, width, height query parameters required"
+    }
     const input = (await axios({ url: encodeURI(req.query.url), responseType: "arraybuffer" })).data
 
     const quality = req.query.quality ? parseInt(req.query.quality) : 80
@@ -33,5 +36,5 @@ fastify.listen({port: 8020, host: "0.0.0.0"}, (err, addr) => {
     console.log(err)
 })
 
-console.log("starting")
+console.log("starting on http://localhost:8020")
 
