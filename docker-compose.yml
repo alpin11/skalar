@@ -6,5 +6,7 @@ services:
     ports:
       - 8020:8020
     command: 'npm run start'
+    environment:
+      - ALLOWED_DOMAINS=["alpin11.dev", "alpin11.com"]
     deploy:
       replicas: 1

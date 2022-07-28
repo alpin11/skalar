@@ -3,6 +3,8 @@ import sharp from "sharp"
 import Fastify from "fastify"
 import mimeTypes from 'mime-types'
 
+const allowedDomains = JSON.parse(process.env.ALLOWED_DOMAINS ?? "[]")
+
 const fastify = Fastify()
 
 fastify.get("/", {
@@ -18,6 +20,13 @@ fastify.get("/", {
     if (!req.query.url) {
       return "url, width, height query parameters required"
     }
+
+    // Check if domain whitelisting is enabled and if the domain is whitelisted
+    if ((allowedDomains.length > 0) && (!allowedDomains.includes(new URL(req.query.url).hostname))) {
+      return "Domain Name not allowed!"
+    }
+
+
     const input = (await axios({ url: encodeURI(req.query.url), responseType: "arraybuffer" })).data
 
     const quality = req.query.quality ? parseInt(req.query.quality) : 80
@@ -37,4 +46,4 @@ fastify.listen({port: 8020, host: "0.0.0.0"}, (err, addr) => {
 })
 
 console.log("starting on http://localhost:8020")
-
+console.log("allowed domains", allowedDomains)
