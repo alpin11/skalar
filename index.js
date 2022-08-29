@@ -37,7 +37,7 @@ fastify.get("/", {
 
     const mimeType = mimeTypes.lookup(req.query.format) || "image/webp"
 
-    const maxAge = Number(req.query.cacheMaxAge) ?? 31536000
+    const maxAge = Number(req.query.cacheMaxAge) || 31536000
     res.header("Cache-Control", `max-age=${maxAge}`)
 
     console.log(`serving ${req.query.url}`)
