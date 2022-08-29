@@ -15,6 +15,8 @@ fastify.get("/", {
       height: {type: "integer"},
       format: {type: "string"},
       quality: {type: "string"},
+      // set Cache-Control max-age in seconds
+      cacheMaxAge: {type: "integer"}
     }
   }}, async (req, res) => {
     if (!req.query.url) {
@@ -34,6 +36,9 @@ fastify.get("/", {
     const output = await sharp(input).resize({width: req.query.width, height: req.query.height, fit: "cover"}).toFormat(req.query.format ?? "webp", {quality}).toBuffer()
 
     const mimeType = mimeTypes.lookup(req.query.format) || "image/webp"
+
+    const maxAge = Number(req.query.cacheMaxAge) ?? 31536000
+    res.header("Cache-Control", `max-age=${maxAge}`)
 
     console.log(`serving ${req.query.url}`)
     res.type(mimeType).code(200)
