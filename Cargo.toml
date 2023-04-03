@@ -1,0 +1,16 @@
+[package]
+name = "image-scaling"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.6.12"
+axum-macros = "0.3.7"
+image = { version = "0.24.6", features = ["webp-encoder"] }
+mime_guess = "2.0.4"
+reqwest = { version = "0.11.16", features = ["gzip", "rustls"] }
+serde = { version = "1.0.159", features = ["derive"] }
+serde_json = "1.0.95"
+tokio = { version = "1.27.0", features = ["full"] }
