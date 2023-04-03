@@ -1,18 +1,26 @@
+use crate::app_state::AppState;
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
+use image::ImageFormat;
+use request_context::RequestContext;
+use reqwest::{header, StatusCode};
 use std::{
     env,
     io::{BufWriter, Cursor},
     net::SocketAddr,
 };
 
-use axum::{extract::Query, response::IntoResponse, routing::get, Router};
-use image::ImageFormat;
-use request_context::RequestContext;
-use reqwest::{header, StatusCode};
+mod app_state;
 mod request_context;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/", get(handle));
+    let app_state = AppState::new().unwrap();
+    let app = Router::new().route("/", get(handle)).with_state(app_state);
 
     let addr = SocketAddr::new(
         "0.0.0.0".parse().unwrap(),
@@ -28,8 +36,15 @@ async fn main() {
 #[axum_macros::debug_handler]
 async fn handle(
     Query(ctx): Query<RequestContext>,
+    State(state): State<AppState>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    // TODO: check if domain allowed
+    // check if domain is allowed
+    if !state.is_allowed(&ctx.url) {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            "Domain is not whitelisted".to_string(),
+        ));
+    }
 
     // get image format
     let extension_string = &ctx.format.unwrap_or("png".into());
