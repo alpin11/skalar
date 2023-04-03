@@ -3,7 +3,7 @@ use std::env::{self, VarError};
 use reqwest::Url;
 
 #[derive(Clone, Debug)]
-pub enum UrlMethod {
+pub enum DomainMatchMode {
     Whitelist,
     Blacklist,
 }
@@ -11,14 +11,14 @@ pub enum UrlMethod {
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub domains: Vec<Url>,
-    pub method: UrlMethod,
+    pub mode: DomainMatchMode,
 }
 
 impl AppState {
     pub fn new() -> Result<AppState, VarError> {
-        let method = match env::var("METHOD") {
-            Ok(value) if value == "blacklist" => UrlMethod::Blacklist,
-            _ => UrlMethod::Whitelist,
+        let mode = match env::var("MODE") {
+            Ok(value) if value == "blacklist" => DomainMatchMode::Blacklist,
+            _ => DomainMatchMode::Whitelist,
         };
 
         let domains = if env::var("DOMAINS").is_err() {
@@ -30,7 +30,7 @@ impl AppState {
                 .collect()
         };
 
-        Ok(AppState { domains, method })
+        Ok(AppState { domains, mode })
     }
 
     pub fn is_allowed(&self, url_string: &str) -> bool {
@@ -42,9 +42,9 @@ impl AppState {
             .iter()
             .any(|domain| domain.domain() == url.domain());
         
-        match &self.method {
-          UrlMethod::Whitelist => return contains,
-          UrlMethod::Blacklist => return !contains,
+        match &self.mode {
+          DomainMatchMode::Whitelist => return contains,
+          DomainMatchMode::Blacklist => return !contains,
         }
     }
 }

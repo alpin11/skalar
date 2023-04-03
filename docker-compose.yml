@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  image-scaling:
+    build: .
+    ports:
+      - 3080:3080
+    environment:
+      - DOMAINS=https://jmp.blue
+      - MODE=whitelist
+    restart: on-failure
