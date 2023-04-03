@@ -1,11 +1,10 @@
 # Image Scaling Service
-Uses Sharp to scale image to desired size
 
-# Env Variables
+## Env Variables
 - DOMAINS: ; seperated list of urls (https://example.com;http://test.xyz...)
 - MODE: whitelist/blacklist
 
-# Query Params
+## Query Params
 - url: source of the image (required)
 - width
 - height
