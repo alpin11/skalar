@@ -54,7 +54,7 @@ async fn handle(
     // download imgage
     let res = reqwest::get(ctx.url)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Fetching Image".to_string()))?;
     if res.error_for_status_ref().is_err() {
         let error = &res.error_for_status_ref().unwrap_err();
         return Err((res.status(), error.to_string()));
@@ -62,9 +62,9 @@ async fn handle(
     let bytes = res
         .bytes()
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Fetching Image".to_string()))?;
     let image = image::load_from_memory(&bytes)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid Image".to_string()))?;
 
     // resize
     let image = image.resize(
@@ -78,10 +78,10 @@ async fn handle(
     let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
     image
         .write_to(&mut buffer, format)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Converting to requested format".to_string()))?;
     let bytes: Vec<u8> = buffer
         .into_inner()
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Converting to requested format".to_string()))?
         .into_inner();
 
     return Ok((
