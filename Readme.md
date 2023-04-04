@@ -1,7 +1,7 @@
 # Image Scaling Service
 
 ## Env Variables
-- DOMAINS: ; seperated list of urls (https://example.com;http://test.xyz...)
+- DOMAINS: ; seperated list of domains (example.com;test.xyz...), regex matches, so *.example.com works
 - MODE: whitelist/blacklist
 
 ## Query Params

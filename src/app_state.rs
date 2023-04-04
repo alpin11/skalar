@@ -1,5 +1,5 @@
 use std::env::{self, VarError};
-
+use regex::Regex;
 use reqwest::Url;
 
 #[derive(Clone, Debug)]
@@ -10,7 +10,7 @@ pub enum DomainMatchMode {
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub domains: Vec<Url>,
+    pub domains: Vec<Regex>,
     pub mode: DomainMatchMode,
 }
 
@@ -26,7 +26,8 @@ impl AppState {
         } else {
             env::var("DOMAINS")?
                 .split(";")
-                .map(|x| Url::parse(x).unwrap())
+                .map(|s| s.replace("*", r".*"))
+                .map(|s| Regex::new(&s).unwrap())
                 .collect()
         };
 
@@ -40,11 +41,19 @@ impl AppState {
         };
         let contains = self.domains
             .iter()
-            .any(|domain| domain.domain() == url.domain());
+            .any(|domain| {
+                if let Some(url) = url.host() {
+                    let url = url.to_string();
+                    println!("allowed domain: {:?}, requested: {:?}", domain.as_str(), url);
+                    domain.is_match(&url)
+                } else {
+                    false
+                }
+            });
         
         match &self.mode {
-          DomainMatchMode::Whitelist => return contains,
-          DomainMatchMode::Blacklist => return !contains,
+          DomainMatchMode::Whitelist => contains,
+          DomainMatchMode::Blacklist => !contains,
         }
     }
 }
