@@ -44,7 +44,6 @@ impl AppState {
             .any(|domain| {
                 if let Some(url) = url.host() {
                     let url = url.to_string();
-                    println!("allowed domain: {:?}, requested: {:?}", domain.as_str(), url);
                     domain.is_match(&url)
                 } else {
                     false
