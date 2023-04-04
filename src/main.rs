@@ -47,9 +47,9 @@ async fn handle(
     }
 
     // get image format
-    let extension_string = &ctx.format.unwrap_or("png".into());
-    let format = ImageFormat::from_extension(extension_string).unwrap_or(ImageFormat::Png);
-    let mime_type = mime_guess::from_ext(extension_string).first_or("image/png".parse().unwrap());
+    let extension_string = &ctx.format.unwrap_or("webp".into());
+    let format = ImageFormat::from_extension(extension_string).unwrap_or(ImageFormat::WebP);
+    let mime_type = mime_guess::from_ext(extension_string).first_or("image/webp".parse().unwrap());
 
     // download imgage
     let res = reqwest::get(ctx.url)
@@ -73,7 +73,8 @@ async fn handle(
         image::imageops::FilterType::Nearest,
     );
 
-    // convert
+    // convert to rgba8 here since webp only supports that
+    let image = image.to_rgba8();
     let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
     image
         .write_to(&mut buffer, format)
