@@ -29,7 +29,6 @@ impl FetchError {
 }
 
 pub async fn fetch_data(url: &str) -> Result<Vec<u8>, FetchError> {
-    println!("{:?}", &url);
     let client = Client::new();
     let mut response = client.get(url)
         .send().await.map_err(|_| FetchError::SendError)?;
