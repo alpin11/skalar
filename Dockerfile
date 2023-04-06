@@ -15,6 +15,4 @@ RUN adduser --disabled-password --gecos '' image-scaling
 USER image-scaling
 ENV USER=image-scaling
 
-RUN chown -R image-scaling .
-
 CMD ["image-scaling"]
