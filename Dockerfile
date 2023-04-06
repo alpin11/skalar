@@ -4,6 +4,7 @@ COPY . .
 RUN cargo install --path .
 
 FROM debian:bullseye-slim
+WORKDIR /usr/src/image-scaling
 RUN apt-get update && apt-get -y install openssl ca-certificates curl \
   && rm -rfv /var/lib/apt/lists/*
 
