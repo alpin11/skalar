@@ -5,6 +5,7 @@ use axum::{
     routing::get,
     Router,
 };
+use fetch::fetch_data;
 use image::{ImageFormat, io::{Reader, Limits}, guess_format, ImageError};
 use request_context::RequestContext;
 use reqwest::{header, StatusCode};
@@ -14,6 +15,7 @@ use std::{
     net::SocketAddr,
 };
 
+mod fetch;
 mod app_state;
 mod request_context;
 
@@ -52,17 +54,9 @@ async fn handle(
     let mime_type = mime_guess::from_ext(extension_string).first_or("image/webp".parse().unwrap());
 
     // download imgage
-    let res = reqwest::get(&ctx.url)
+    let bytes = fetch_data(&ctx.url)
         .await
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Fetching Image".to_string()))?;
-    if res.error_for_status_ref().is_err() {
-        let error = &res.error_for_status_ref().unwrap_err();
-        return Err((res.status(), error.to_string()));
-    }
-    let bytes = res
-        .bytes()
-        .await
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Fetching Image".to_string()))?;
+        .map_err(|e| e.to_http_error())?;
 
     // determine image format
     let fetched_format = guess_format(&bytes)
