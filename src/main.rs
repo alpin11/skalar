@@ -1,12 +1,12 @@
 use crate::app_state::AppState;
 use axum::{
     extract::{Query, State},
-    response::IntoResponse,
+    response::{IntoResponse, Response, Redirect},
     routing::get,
     Router,
 };
 use fetch::fetch_data;
-use image::{ImageFormat, io::{Reader, Limits}, guess_format, ImageError};
+use image::{ImageFormat, io::{Reader, Limits}, guess_format};
 use request_context::RequestContext;
 use reqwest::{header, StatusCode};
 use std::{
@@ -39,7 +39,7 @@ async fn main() {
 async fn handle(
     Query(ctx): Query<RequestContext>,
     State(state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
+) -> Result<Response, (StatusCode, String)> {
     // check if domain is allowed
     if !state.is_allowed(&ctx.url) {
         return Err((
@@ -76,24 +76,15 @@ async fn handle(
     if image.is_err() {
         let err = image.unwrap_err();
         return match err {
-            ImageError::Limits(e) => {
+            e => {
                 // since not all decoders use the correct allocator limits, specifically the png one
                 // as a temprorary workarround until proper limits are used here
                 // https://github.com/image-rs/image-png/blob/2f53fc40b91a5e1d0ad1801b746c04a7fe1d8603/src/decoder/stream.rs#L751
-                // we return the fetched data directly instead of trying to convert it
+                // we redirect to the original data instead of trying to convert it
                 // TODO: remove temporary workarround
                 println!("{:?} on {:?} for format {:?}", e, &ctx.url, &fetched_format);
-                let mime_type = mime_guess::from_path(&ctx.url).first_or("image/png".parse().unwrap());
-                Ok((
-                    [(header::CONTENT_TYPE, mime_type.to_string())],
-                    [(
-                        header::CACHE_CONTROL,
-                        format!("max-age={}", ctx.cache_max_age.unwrap_or(31536000)),
-                    )],
-                    bytes.to_vec(),
-                ))
-            },
-            _ => Err((StatusCode::INTERNAL_SERVER_ERROR, "Error decoding image".to_string()))
+                Ok(Redirect::temporary(&ctx.url).into_response())
+            }
         }
     }
 
@@ -124,5 +115,5 @@ async fn handle(
             format!("max-age={}", ctx.cache_max_age.unwrap_or(31536000)),
         )],
         bytes,
-    ));
+    ).into_response());
 }
