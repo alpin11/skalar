@@ -1,12 +1,16 @@
 use crate::app_state::AppState;
 use axum::{
     extract::{Query, State},
-    response::{IntoResponse, Response, Redirect},
+    response::{IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
 use fetch::fetch_data;
-use image::{ImageFormat, io::{Reader, Limits}, guess_format};
+use image::{
+    guess_format,
+    io::{Limits, Reader},
+    ImageFormat,
+};
 use request_context::RequestContext;
 use reqwest::{header, StatusCode};
 use std::{
@@ -15,8 +19,8 @@ use std::{
     net::SocketAddr,
 };
 
-mod fetch;
 mod app_state;
+mod fetch;
 mod request_context;
 
 #[tokio::main]
@@ -49,18 +53,29 @@ async fn handle(
     }
 
     // get image format
-    let extension_string = &ctx.format.clone().unwrap_or("webp".into());
-    let requested_format = ImageFormat::from_extension(extension_string).unwrap_or(ImageFormat::WebP);
-    let mime_type = mime_guess::from_ext(extension_string).first_or("image/webp".parse().unwrap());
+    let requested_extension_string = &ctx.format.clone().unwrap_or("webp".into());
+    let requested_format =
+        ImageFormat::from_extension(requested_extension_string).unwrap_or(ImageFormat::WebP);
+    let requested_mime_type =
+        mime_guess::from_ext(requested_format.extensions_str().first().unwrap_or(&"webp"))
+            .first_or("image/webp".parse().unwrap());
 
+    // redirect to source if the provided format is svg
+    let provided_mime_type =
+        mime_guess::from_path(&ctx.url).first_or("image/webp".parse().unwrap());
+    if provided_mime_type.subtype().to_string() == "svg" {
+        return Ok(Redirect::temporary(&ctx.url).into_response());
+    }
     // download imgage
-    let bytes = fetch_data(&ctx.url)
-        .await
-        .map_err(|e| e.to_http_error())?;
+    let bytes = fetch_data(&ctx.url).await.map_err(|e| e.to_http_error())?;
 
     // determine image format
-    let fetched_format = guess_format(&bytes)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Unable to determine Image format".to_string()))?;
+    let fetched_format = guess_format(&bytes).map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Unable to determine Image format".to_string(),
+        )
+    })?;
 
     // decode image
     let mut decoder = Reader::new(Cursor::new(&bytes));
@@ -69,7 +84,6 @@ async fn handle(
     // set allocator limit to 1gb
     limits.max_alloc = Some(1024 * 1024 * 1024);
     decoder.limits(limits);
-
 
     let image = decoder.decode();
 
@@ -85,7 +99,7 @@ async fn handle(
                 println!("{:?} on {:?} for format {:?}", e, &ctx.url, &fetched_format);
                 Ok(Redirect::temporary(&ctx.url).into_response())
             }
-        }
+        };
     }
 
     let image = image.unwrap();
@@ -100,20 +114,29 @@ async fn handle(
     // convert to rgba8 here since webp only supports that
     let image = image.to_rgba8();
     let mut buffer = BufWriter::new(Cursor::new(Vec::new()));
-    image
-        .write_to(&mut buffer, requested_format)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Converting to requested format".to_string()))?;
+    image.write_to(&mut buffer, requested_format).map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Error Converting to requested format".to_string(),
+        )
+    })?;
     let bytes: Vec<u8> = buffer
         .into_inner()
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error Converting to requested format".to_string()))?
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Error Converting to requested format".to_string(),
+            )
+        })?
         .into_inner();
 
     return Ok((
-        [(header::CONTENT_TYPE, mime_type.to_string())],
+        [(header::CONTENT_TYPE, requested_mime_type.to_string())],
         [(
             header::CACHE_CONTROL,
             format!("max-age={}", ctx.cache_max_age.unwrap_or(31536000)),
         )],
         bytes,
-    ).into_response());
+    )
+        .into_response());
 }
