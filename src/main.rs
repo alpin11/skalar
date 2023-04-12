@@ -54,11 +54,18 @@ async fn handle(
 
     // get image format
     let requested_extension_string = &ctx.format.clone().unwrap_or("webp".into());
-    let requested_format =
-        ImageFormat::from_extension(requested_extension_string).unwrap_or(ImageFormat::WebP);
-    let requested_mime_type =
-        mime_guess::from_ext(requested_format.extensions_str().first().unwrap_or(&"webp"))
-            .first_or("image/webp".parse().unwrap());
+    let requested_format = ImageFormat::from_extension(requested_extension_string);
+    let requested_mime_type = mime_guess::from_ext(&requested_extension_string).first();
+
+    if requested_mime_type.is_none() || requested_format.is_none() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("Format {} not supported", &requested_extension_string),
+        ));
+    }
+
+    let requested_mime_type = requested_mime_type.unwrap();
+    let requested_format = requested_format.unwrap();
 
     // redirect to source if the provided format is svg
     let provided_mime_type =
