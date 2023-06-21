@@ -27,6 +27,7 @@ impl AppState {
             env::var("DOMAINS")?
                 .split(";")
                 .map(|s| s.replace("*", r".*"))
+                .map(|s| format!("^{s}$"))
                 .map(|s| Regex::new(&s).unwrap())
                 .collect()
         };
@@ -40,9 +41,11 @@ impl AppState {
             Err(_) => return false,
         };
         let contains = self.domains.iter().any(|domain| {
-            if let Some(url) = url.host() {
-                let url = url.to_string();
-                domain.is_match(&url)
+            if let Some(host) = url.host() {
+                let host = host.to_string();
+                let path = url.path();
+                let full = format!("{host}{path}");
+                domain.is_match(&full)
             } else {
                 false
             }
